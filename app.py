@@ -187,7 +187,7 @@ external_stylesheets = [
     }
 ]
 app = dash.Dash()
-
+server=app.server
 
 
 app.layout = html.Div(id = 'parent', children = [
