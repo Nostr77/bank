@@ -1,6 +1,3 @@
 dash
-plotly.graph_objects
-plotly.express
-plotly.subplots 
-dash.dependencies
+plotly
 pandas
