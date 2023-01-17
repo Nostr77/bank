@@ -194,25 +194,25 @@ def NameFigAgg(TYPE):
 
 def NameFigAggUkr(TYPE):
     if (TYPE=='DFOOS'):
-        return 'Кошти фізичних осіб'
+        return 'Кошти фізосіб'
     elif (TYPE=='DSG'):
-        return 'Кошти суб`єктів господарювання'
+        return 'Кошти суб`єктів госп.'
     elif (TYPE=='LFONET'):
-        return 'Кредити фізичним особам (Чисті)'
+        return 'Кредити фізособам (Чисті)'
     elif (TYPE=='LSGNET'):
-        return 'Кредити суб`єктам господарювання (Чисті)'
+        return 'Кредити суб`єктам госп. (Чисті)'
     elif (TYPE=='LFOGRO'):
-        return 'Кредити фізичним особам (Валові)'
+        return 'Кредити фізособам (Валові)'
     elif (TYPE=='LSGGRO'):
-        return 'Кредити суб`єктам господарювання (Валові)'
+        return 'Кредити суб`єктам госп.(Вал)'
     elif (TYPE=='DSNBp'):
-        return 'Депозитні сертифікати НБУ (основний борг)'
+        return 'Деп. сертифікати НБУ (осн. борг)'
     elif (TYPE=='OVDPp'):
-        return 'ОВДП (основний борг)'
+        return 'ОВДП (осн. борг)'
 
 
 app = dash.Dash()
-server=app.server  #############################################################################
+#server=app.server  #############################################################################
 
 app.layout = html.Div(id = 'parent', children = [
 
@@ -455,14 +455,31 @@ def graph_update(dropdown_value,lang_value):
 
 def graph_update(dropdown_value, dropdown2_value, dropdown3_value, lang_value):
     if lang_value=='Eng':
-        l1=[NameFigAgg('{}'.format(dropdown_value))+' : ({}'.format(dropdown2_value)+') : Stock, billions as of '+str(dtl)[:10],NameFigAgg('{}'.format(dropdown_value))+': Change yoy, billions as of '+str(dtl)[:10], NameFigAgg('{}'.format(dropdown_value))+': Change yoy, % as of '+str(dtl)[:10]]    
+        if (dropdown2_value=='UAH'):
+            l4='UAH'
+        elif (dropdown2_value=='FXD'):
+            l4='FX USD eq.'
+        elif (dropdown2_value=='UAE'):
+            l4='All, Fixed rate'
+        elif (dropdown2_value=='UAA'):
+            l4='All, current rate'
+        l1=[NameFigAgg('{}'.format(dropdown_value))+' : '+l4+' : Stock, bil. as of '+str(dtl)[:10], NameFigAgg('{}'.format(dropdown_value))+' : '+l4+' : Change yoy, bil. as of '+str(dtl)[:10], NameFigAgg('{}'.format(dropdown_value))+' : '+l4+' : Change yoy, % as of '+str(dtl)[:10]]    
         l2=NameFigAgg('{}'.format(dropdown_value))+' {}'.format(dropdown2_value)
         l3='EN'
+
     elif lang_value=='Ukr':
-        l1=[NameFigAggUkr('{}'.format(dropdown_value))+' : ({}'.format(dropdown2_value)+') : залишки, млрд од валюти на '+str(dtl)[:10],NameFigAggUkr('{}'.format(dropdown_value))+': зміна р/р, млрд од валюти на '+str(dtl)[:10], NameFigAggUkr('{}'.format(dropdown_value))+': зміна р/р, % на '+str(dtl)[:10]]    
+        if (dropdown2_value=='UAH'):
+            l4='Гривня'
+        elif (dropdown2_value=='FXD'):
+            l4='Ін.валюта, дол. екв.'
+        elif (dropdown2_value=='UAE'):
+            l4='Усі за фікс. курсом '
+        elif (dropdown2_value=='UAA'):
+            l4='Усі за поточним курсом'
+        l1=[NameFigAggUkr('{}'.format(dropdown_value))+' : '+l4+' : залишки, млрд на '+str(dtl)[:10],NameFigAggUkr('{}'.format(dropdown_value))+' : '+l4+' : зміна р/р, млрд на '+str(dtl)[:10], NameFigAggUkr('{}'.format(dropdown_value))+' : '+l4+' : зміна р/р, % на '+str(dtl)[:10]]    
         l2=NameFigAggUkr('{}'.format(dropdown_value))+' {}'.format(dropdown2_value)
         l3='UA'
-
+        
     # FIG1 ##################################
     fig1 = make_subplots(rows=1, cols=3, 
         subplot_titles=l1, 
@@ -513,7 +530,7 @@ def graph_update(dropdown_value, nkb4_value, lang_value):
         l2='Stock, billion'
         l3='yoy (r.h.s.)'
     elif lang_value=='Ukr':
-        l1=[NameFigAggUkr('{}'.format(dropdown_value))+': Національна валюта, млрд грн ',NameFigAggUkr('{}'.format(dropdown_value))+': Іноземна валюта, дол. екв., млрд дол США ',NameFigAggUkr('{}'.format(dropdown_value))+': Усі валюти, фікс. на кінець періоду курс, млрд грн ']    
+        l1=[NameFigAggUkr('{}'.format(dropdown_value))+': Гривня, млрд грн ',NameFigAggUkr('{}'.format(dropdown_value))+': Ін.валюта, дол. екв., млрд дол США ',NameFigAggUkr('{}'.format(dropdown_value))+': Усі валюти, фікс. на кінець періоду курс, млрд грн ']    
         l2='Залишки, млрд од валюти'
         l3='p/p (п.ш.)'
 
