@@ -76,12 +76,13 @@ def transform1(baz, bank):
 #pd.read_excel(r'c:\acc\r\out\OSB.xlsx', sheet_name='AGG').info()
 df=transform1(pd.read_csv(r'https://raw.githubusercontent.com/Nostr77/bank/main/OSBagg.csv'),999)
 dtl=max(df.DT)
+dt0=min(df.DT)
 
 #Patch LFONET LFOGRO LSGGRO
-df.yoy_UAH[((df.DT<'2019-07-01') & ((df.TYPE=='LFONET') | (df.TYPE=='LFOGRO')| (df.TYPE=='LSGGRO')) )]=None
-df.yoy_FXD[((df.DT<'2019-07-01') & ((df.TYPE=='LFONET') | (df.TYPE=='LFOGRO')| (df.TYPE=='LSGGRO')) )]=None
-df.yoy_UAE[((df.DT<'2019-07-01') & ((df.TYPE=='LFONET') | (df.TYPE=='LFOGRO')| (df.TYPE=='LSGGRO')) )]=None
-df.yoy_UAA[((df.DT<'2019-07-01') & ((df.TYPE=='LFONET') | (df.TYPE=='LFOGRO')| (df.TYPE=='LSGGRO')) )]=None
+df.yoy_UAH[((df.DT<'2019-07-01') & ((df.TYPE=='LFONET') | (df.TYPE=='LFOGRO')| (df.TYPE=='LSGGRO')  | (df.TYPE=='LSGNET')) )]=None
+df.yoy_FXD[((df.DT<'2019-07-01') & ((df.TYPE=='LFONET') | (df.TYPE=='LFOGRO')| (df.TYPE=='LSGGRO') | (df.TYPE=='LSGNET')) )]=None
+df.yoy_UAE[((df.DT<'2019-07-01') & ((df.TYPE=='LFONET') | (df.TYPE=='LFOGRO')| (df.TYPE=='LSGGRO') | (df.TYPE=='LSGNET')) )]=None
+df.yoy_UAA[((df.DT<'2019-07-01') & ((df.TYPE=='LFONET') | (df.TYPE=='LFOGRO')| (df.TYPE=='LSGGRO') | (df.TYPE=='LSGNET')) )]=None
 ###########################
 
 #dfb=pd.read_csv(r'https://raw.githubusercontent.com/Nostr77/bank/main/OSBbb.csv')
@@ -173,10 +174,6 @@ def transformBB(type, top):
     g=pd.merge(g, key, how="left", on=['NKB'])
     return g
 
-#transformBB('DSNBp','46').to_csv(r'c:\1\111.csv')
-#transform1(baza,46).to_csv(r'c:\1\112.csv')
-
-
 def NameFigAgg(TYPE):
     if (TYPE=='DFOOS'):
         return 'Retail Deposits'
@@ -215,7 +212,7 @@ def NameFigAggUkr(TYPE):
 
 
 app = dash.Dash()
-server=app.server  #############################################################################
+#server=app.server  #############################################################################
 
 app.layout = html.Div(id = 'parent', children = [
 
@@ -244,10 +241,12 @@ app.layout = html.Div(id = 'parent', children = [
         , style={'width': '100%', 'height': '35px', 'background-color':'#f5b7b1', 'font-size': '15px', 'font-family': 'Arial'}),
 
         dcc.Graph(id = 'bar_plot', style = {'textAlign':'center', 'marginTop':20,'marginBottom':20, 'background-color': 'black', 'color': 'white'}),
-    html.H2(id = 'H3', children = '', 
-            style = {'textAlign':'center', 'marginTop':40,'marginBottom':40,
-                     'background-color': 'black', 'color': 'white' }),
 
+    #dcc.Slider(2019,2023,1, value=2020, marks={
+    #    i: {            "label": f"  {i}",
+    #                    "style": {"transform": "rotate(0deg)", "white-space": "nowrap", 'color': 'white', 'font-size': '15px', 'font-family': 'Arial', 'textAlign':'left'},}
+    #    for i in range(2019, 2024)    }, id='slider', included=False,
+    #    tooltip='Starting year for all charts'),
         dcc.Graph(id = 'bar_plot1', style = {'textAlign':'center', 'marginTop':20,'marginBottom':20,
                      'background-color': 'black', 'color': 'white'}),
         
@@ -348,13 +347,11 @@ app.layout = html.Div(id = 'parent', children = [
         {'label':'Alt : Альт', 'value':'43' },        
         {'label':'PFB : ПФБ', 'value':'294' }
             ],
-        value = '46'
-                , style={'width': '100%', 'height': '100%', 
-                   'background-color':' #fadbd8', 'font-size': '15px', 'font-family': 'Arial'}),
+        value = '46', style={'width': '100%', 'height': '100%', 'background-color':' #fadbd8', 'font-size': '15px', 'font-family': 'Arial'}),
 
-        dcc.Graph(id = 'bar_plot4', style = {'textAlign':'center', 'marginTop':20,'marginBottom':40,
-                     'background-color': 'black', 'color': 'white'}),
+        dcc.Graph(id = 'bar_plot4', style = {'textAlign':'center', 'marginTop':20,'marginBottom':40, 'background-color': 'black', 'color': 'white'}),
         
+        html.Div(id='notes', style = {'textAlign':'left', 'background-color': 'black', 'color': 'white', 'width': '100%', 'font-size': '80%', 'font-family': 'Arial'}),        
         
     ], style={'background-color':'black'})
 
@@ -363,6 +360,7 @@ app.layout = html.Div(id = 'parent', children = [
               [Input(component_id='dropdown', component_property= 'value'), Input('lang', 'value')])
 
 def graph_update(dropdown_value, lang_value):
+    dfc=df #[df.DT.dt.year>=slider_value].reset_index(drop=True)
     if lang_value=='Eng':
         l1=[NameFigAgg('{}'.format(dropdown_value))+': National Currency, UAH billion ',NameFigAgg('{}'.format(dropdown_value))+': FX, USD billion',NameFigAgg('{}'.format(dropdown_value))+': All currencies, Fixed Exchange Rate, UAH billion']    
         l2='Stock, billion'
@@ -382,19 +380,22 @@ def graph_update(dropdown_value, lang_value):
     fig.update_layout(showlegend=True)
     fig.update_layout(height=370)
     fig.update_layout(plot_bgcolor='#e5e8e8')
+    fig.update_xaxes(rangeslider_visible=True)
+    fig.update_xaxes(rangeslider_thickness = 0.07)
 
     fig.update_layout(yaxis_tickformat = '0',yaxis2_tickformat = '0.0%', yaxis3_tickformat = '0', yaxis4_tickformat = '0.0%', yaxis5_tickformat = '0', yaxis6_tickformat = '0.0%')
-    fig.add_trace(go.Bar(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.S_UAH[df.TYPE=='{}'.format(dropdown_value)], name=l2 , marker_color='#87CEEB', showlegend=True),
+    #fig.update_layout(xaxis_tickformat = 'mm.yy',xaxis2_tickformat = 'mm.yy', xaxis3_tickformat = 'mm.yy')
+    fig.add_trace(go.Bar(x=dfc.Date[dfc.TYPE=='{}'.format(dropdown_value)], y=dfc.S_UAH[dfc.TYPE=='{}'.format(dropdown_value)], name=l2 , marker_color='#87CEEB', showlegend=True),
         row=1, col=1, secondary_y=False)
-    fig.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.yoy_UAH[df.TYPE=='{}'.format(dropdown_value)], name=l3, line=dict(color="#ff6600"), showlegend=True),
+    fig.add_trace(go.Scatter(x=dfc.Date[dfc.TYPE=='{}'.format(dropdown_value)], y=dfc.yoy_UAH[dfc.TYPE=='{}'.format(dropdown_value)], name=l3, line=dict(color="#ff6600"), showlegend=True),
         row=1, col=1, secondary_y=True)
-    fig.add_trace(go.Bar(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.S_FXD[df.TYPE=='{}'.format(dropdown_value)], name='FXD' , marker_color='#87CEEB', showlegend=False),
+    fig.add_trace(go.Bar(x=dfc.Date[dfc.TYPE=='{}'.format(dropdown_value)], y=dfc.S_FXD[dfc.TYPE=='{}'.format(dropdown_value)], name='FXD' , marker_color='#87CEEB', showlegend=False),
         row=1, col=2, secondary_y=False)
-    fig.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.yoy_FXD[df.TYPE=='{}'.format(dropdown_value)], name="yoy", line=dict(color="#ff6600"), showlegend=False),
+    fig.add_trace(go.Scatter(x=dfc.Date[dfc.TYPE=='{}'.format(dropdown_value)], y=dfc.yoy_FXD[dfc.TYPE=='{}'.format(dropdown_value)], name="yoy", line=dict(color="#ff6600"), showlegend=False),
         row=1, col=2, secondary_y=True)
-    fig.add_trace(go.Bar(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.S_UAE[df.TYPE=='{}'.format(dropdown_value)], name='All' , marker_color='#87CEEB', showlegend=False),
+    fig.add_trace(go.Bar(x=dfc.Date[dfc.TYPE=='{}'.format(dropdown_value)], y=dfc.S_UAE[dfc.TYPE=='{}'.format(dropdown_value)], name='All' , marker_color='#87CEEB', showlegend=False),
         row=1, col=3, secondary_y=False)
-    fig.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.yoy_UAE[df.TYPE=='{}'.format(dropdown_value)], name="yoy", line=dict(color="#ff6600"), showlegend=False),
+    fig.add_trace(go.Scatter(x=dfc.Date[dfc.TYPE=='{}'.format(dropdown_value)], y=dfc.yoy_UAE[dfc.TYPE=='{}'.format(dropdown_value)], name="yoy", line=dict(color="#ff6600"), showlegend=False),
         row=1, col=3, secondary_y=True)
     return fig  
 
@@ -403,12 +404,12 @@ def graph_update(dropdown_value, lang_value):
 
 def graph_update(dropdown_value,lang_value):
     if lang_value=='Eng':
-        l1=['Growth yoy, %','Growth 3 Months Trailing, % ', 'Growth mom, %']    
+        l1=['Growth yoy, %','Growth mom, %', 'Dollarization, %']    
         l3='UAH'
         l4='FX (USD eq.)'
         l5='All currencies, Fixed exchange rate'
     elif lang_value=='Ukr':
-        l1=['Приріст р/р, %','Приріст за останні три плинних місяця, % ', 'Приріст за місяць, %']    
+        l1=['Приріст р/р, %', 'Приріст за місяць, %','Доларизація (частка валютної складової), %']    
         l3='Національна валюта'
         l4='Іноземна валюта, доларовий еквівалент'
         l5='Усі валюти, за фіксованим курсом на кінець періоду'
@@ -425,6 +426,9 @@ def graph_update(dropdown_value,lang_value):
     fig1.update_layout(showlegend=True)
     fig1.update_layout(height=370)
     fig1.update_layout(plot_bgcolor=' #e5e8e8 ')
+    fig1.update_xaxes(rangeslider_visible=True)
+    fig1.update_xaxes(rangeslider_thickness = 0.07)
+
     fig1.update_layout(yaxis_tickformat = '.0%',yaxis2_tickformat = '.0%',yaxis3_tickformat = '.0%')
     # 2 row 1 col
     fig1.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.yoy_UAH[df.TYPE=='{}'.format(dropdown_value)], 
@@ -434,19 +438,15 @@ def graph_update(dropdown_value,lang_value):
     fig1.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.yoy_UAE[df.TYPE=='{}'.format(dropdown_value)], 
         name="Fixed Exchange Rate", line=dict(color='goldenrod'), showlegend=False), row=1, col=1)
     # 2 row 2 col
-    fig1.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.qoq_UAH[df.TYPE=='{}'.format(dropdown_value)], 
-        name='UAH' , line=dict(color='blue'), showlegend=False), row=1, col=2, secondary_y=False)
-    fig1.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.qoq_FXD[df.TYPE=='{}'.format(dropdown_value)], 
-        name="FX", line=dict(color='green'), showlegend=False), row=1, col=2)
-    fig1.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.qoq_UAE[df.TYPE=='{}'.format(dropdown_value)], 
-        name="Fixed Exchange Rate", line=dict(color='goldenrod'), showlegend=False), row=1, col=2)
-    # 2 row 3 col
     fig1.add_trace(go.Bar(x=df.Date[(df.TYPE=='{}'.format(dropdown_value)) & (pd.DatetimeIndex(df.Date).year>=max(pd.DatetimeIndex(df.Date).year)-1)], y=df.mom_UAH[(df.TYPE=='{}'.format(dropdown_value)) & (pd.DatetimeIndex(df.Date).year>=max(pd.DatetimeIndex(df.Date).year)-1)], 
-        name=l3, marker_color='blue', showlegend=True), row=1, col=3, secondary_y=False)
+        name=l3, marker_color='blue', showlegend=True), row=1, col=2, secondary_y=False)
     fig1.add_trace(go.Bar(x=df.Date[(df.TYPE=='{}'.format(dropdown_value)) & (pd.DatetimeIndex(df.Date).year>=max(pd.DatetimeIndex(df.Date).year)-1)], y=df.mom_FXD[(df.TYPE=='{}'.format(dropdown_value)) & (pd.DatetimeIndex(df.Date).year>=max(pd.DatetimeIndex(df.Date).year)-1)], 
-        name=l4, marker_color='green', showlegend=True), row=1, col=3)
+        name=l4, marker_color='green', showlegend=True), row=1, col=2)
     fig1.add_trace(go.Bar(x=df.Date[(df.TYPE=='{}'.format(dropdown_value)) & (pd.DatetimeIndex(df.Date).year>=max(pd.DatetimeIndex(df.Date).year)-1)], y=df.mom_UAE[(df.TYPE=='{}'.format(dropdown_value)) & (pd.DatetimeIndex(df.Date).year>=max(pd.DatetimeIndex(df.Date).year)-1)], 
-        name=l5, marker_color='goldenrod', showlegend=True), row=1, col=3)
+        name=l5, marker_color='goldenrod', showlegend=True), row=1, col=2)
+    # 2 row 3 col
+    fig1.add_trace(go.Scatter(x=df.Date[df.TYPE=='{}'.format(dropdown_value)], y=df.S_FXU[df.TYPE=='{}'.format(dropdown_value)]/df.S_UAA[df.TYPE=='{}'.format(dropdown_value)], 
+        name='UAH' , line=dict(color='blue'), showlegend=False),        row=1, col=3, secondary_y=False)
     return fig1  
 
 
@@ -455,11 +455,11 @@ def graph_update(dropdown_value,lang_value):
 
 def graph_update(dropdown_value, dropdown2_value, dropdown3_value, lang_value):
     if lang_value=='Eng':
-        l1=[NameFigAgg('{}'.format(dropdown_value))+': Stock, billions as of '+str(dtl)[:10],NameFigAgg('{}'.format(dropdown_value))+': Change yoy, billions as of '+str(dtl)[:10], NameFigAgg('{}'.format(dropdown_value))+': Change yoy, % as of '+str(dtl)[:10]]    
+        l1=[NameFigAgg('{}'.format(dropdown_value))+' : ({}'.format(dropdown2_value)+') : Stock, billions as of '+str(dtl)[:10],NameFigAgg('{}'.format(dropdown_value))+': Change yoy, billions as of '+str(dtl)[:10], NameFigAgg('{}'.format(dropdown_value))+': Change yoy, % as of '+str(dtl)[:10]]    
         l2=NameFigAgg('{}'.format(dropdown_value))+' {}'.format(dropdown2_value)
         l3='EN'
     elif lang_value=='Ukr':
-        l1=[NameFigAggUkr('{}'.format(dropdown_value))+': залишки, млрд од валюти на '+str(dtl)[:10],NameFigAggUkr('{}'.format(dropdown_value))+': зміна р/р, млрд од валюти на '+str(dtl)[:10], NameFigAggUkr('{}'.format(dropdown_value))+': зміна р/р, % на '+str(dtl)[:10]]    
+        l1=[NameFigAggUkr('{}'.format(dropdown_value))+' : ({}'.format(dropdown2_value)+') : залишки, млрд од валюти на '+str(dtl)[:10],NameFigAggUkr('{}'.format(dropdown_value))+': зміна р/р, млрд од валюти на '+str(dtl)[:10], NameFigAggUkr('{}'.format(dropdown_value))+': зміна р/р, % на '+str(dtl)[:10]]    
         l2=NameFigAggUkr('{}'.format(dropdown_value))+' {}'.format(dropdown2_value)
         l3='UA'
 
@@ -519,11 +519,12 @@ def graph_update(dropdown_value, nkb4_value, lang_value):
 
     # FIG1 ##################################
     dfa=transform1(baza,int(nkb4_value))
+    #dfa=dfa[dfa.DT.dt.year>=slider_value]
     #Patch LFONET LFOGRO LSGGRO
-    dfa.yoy_UAH[((dfa.DT<'2019-07-01') & ((dfa.TYPE=='LFONET')| (dfa.TYPE=='LFOGRO')| (dfa.TYPE=='LSGGRO')) )]=None
-    dfa.yoy_FXD[((dfa.DT<'2019-07-01') & ((dfa.TYPE=='LFONET')| (dfa.TYPE=='LFOGRO')| (dfa.TYPE=='LSGGRO')) )]=None
-    dfa.yoy_UAE[((dfa.DT<'2019-07-01') & ((dfa.TYPE=='LFONET')| (dfa.TYPE=='LFOGRO')| (dfa.TYPE=='LSGGRO')) )]=None
-    dfa.yoy_UAA[((dfa.DT<'2019-07-01') & ((dfa.TYPE=='LFONET')| (dfa.TYPE=='LFOGRO')| (dfa.TYPE=='LSGGRO')) )]=None
+    dfa.yoy_UAH[((dfa.DT<'2019-07-01') & ((dfa.TYPE=='LFONET')| (dfa.TYPE=='LFOGRO')| (dfa.TYPE=='LSGGRO') | (dfa.TYPE=='LSGNET')) )]=None
+    dfa.yoy_FXD[((dfa.DT<'2019-07-01') & ((dfa.TYPE=='LFONET')| (dfa.TYPE=='LFOGRO')| (dfa.TYPE=='LSGGRO') | (dfa.TYPE=='LSGNET')) )]=None
+    dfa.yoy_UAE[((dfa.DT<'2019-07-01') & ((dfa.TYPE=='LFONET')| (dfa.TYPE=='LFOGRO')| (dfa.TYPE=='LSGGRO') | (dfa.TYPE=='LSGNET')) )]=None
+    dfa.yoy_UAA[((dfa.DT<'2019-07-01') & ((dfa.TYPE=='LFONET')| (dfa.TYPE=='LFOGRO')| (dfa.TYPE=='LSGGRO') | (dfa.TYPE=='LSGNET')) )]=None
     ###########################
 
     fig1 = make_subplots(rows=1, cols=3, 
@@ -537,6 +538,8 @@ def graph_update(dropdown_value, nkb4_value, lang_value):
     fig1.update_layout(showlegend=True)
     fig1.update_layout(height=370)
     fig1.update_layout(plot_bgcolor='#e5e8e8')
+    fig1.update_xaxes(rangeslider_visible=True)
+    fig1.update_xaxes(rangeslider_thickness = 0.07)
     fig1.update_layout(yaxis_tickformat='0',yaxis2_tickformat='0.0%',yaxis3_tickformat='0',yaxis4_tickformat='0.0%',yaxis5_tickformat='0',yaxis6_tickformat='0.0%')
 
     fig1.add_trace(go.Bar(x=dfa.Date[dfa.TYPE=='{}'.format(dropdown_value)], y=dfa.S_UAH[dfa.TYPE=='{}'.format(dropdown_value)], name=l2, marker_color='#87CEEB', showlegend=True), row=1, col=1, secondary_y=False)
@@ -549,6 +552,17 @@ def graph_update(dropdown_value, nkb4_value, lang_value):
     fig1.add_trace(go.Scatter(x=dfa.Date[dfa.TYPE=='{}'.format(dropdown_value)], y=dfa.yoy_UAE[dfa.TYPE=='{}'.format(dropdown_value)], name="yoy", line=dict(color="#ff6600"), showlegend=False), row=1, col=3, secondary_y=True)
 
     return fig1  
+
+@app.callback(Output(component_id='notes', component_property= 'children'),
+              [Input('lang', 'value')])
+
+def text_update(lang_value):
+    if lang_value=='Eng':
+        return 'Source - National Bank of Ukraine (balance sheet https://bank.gov.ua/files/stat/OSB_bank_2022-12-01.xlsx). The sample of banks consists of the banks that were solvent as of the last reporting date. The data include accrued interest as of the end of the period (month, quarter, year), unless otherwise specified. Gross loans are loans not adjusted for provisions against asset-side banking transactions. “Fixed-exchange-rate-based change” refers to the foreign-currency sum of an instrument being calculated using the exchange rate at the end of the period. Data on corporate loans and deposits include data on nonbank financial institutions. Retail deposits include certificates of deposit'
+ 
+    elif lang_value=='Ukr':
+        return 'Джерело даних – Національний банк України (Оборотно-сальдовий баланс банків, https://bank.gov.ua/files/stat/OSB_bank_2022-12-01.xlsx). До вибірки банків належать платоспроможні станом на останню звітну дату. Дані наведено з урахуванням нарахованих відсотків на кінець періоду (місяць, квартал, рік), якщо не зазначено інше. Валові кредити – кредити, не скориговані на резерви за активними операціями банків. Зміна за фіксованим курсом означає, що сума інструменту в іноземній валюті розраховується за курсом на кінець періоду. Дані за кредитами та коштами суб’єктів господарювання включають дані небанківських фінансових установ. Кошти фізичних осіб включають ощадні сертифікати'
+
 
 if __name__ == '__main__': 
     app.run_server()
