@@ -212,7 +212,7 @@ def NameFigAggUkr(TYPE):
 
 
 app = dash.Dash()
-#server=app.server  #############################################################################
+server=app.server  #############################################################################
 
 app.layout = html.Div(id = 'parent', children = [
 
